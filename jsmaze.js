@@ -1,3 +1,6 @@
+var startSet = false;
+var endSet = false;
+
 var gridDimension = 25;
 var canvasHeight = 600;
 var canvasWidth = 600;
@@ -15,7 +18,6 @@ function drawBoard(){
     }
 }
 
-
 canvas.addEventListener('mousedown', function(e) {
     const rect = canvas.getBoundingClientRect();
     let x = Math.round(e.clientX - rect.left);
@@ -28,8 +30,47 @@ canvas.addEventListener('mousedown', function(e) {
         y = y - 1;
     }
     console.log("x: " + x + " y: " + y);
-    context.fillStyle = 'red';
+    context.fillStyle = document.querySelector('.selected').classList[0];
+
+    if (document.querySelector('.selected').classList[0] == "blue") {
+        if (startSet) {
+            alert('only one start possible');
+            return;
+        } else {
+            startSet = true;
+            if (context.getImageData(x, y, 1, 1).data[1] == 128) {
+                endSet = false;
+            }
+        }
+    } else if (document.querySelector('.selected').classList[0] == "green") {
+        if (endSet) {
+            alert('only one end possible');
+            return;
+        } else {
+            endSet = true;
+            if (context.getImageData(x, y, 1, 1).data[2] == 255) {
+                startSet = false;
+            }
+        }
+    } else {
+        if (context.getImageData(x, y, 1, 1).data[1] == 128) {
+            endSet = false;
+        } else if (context.getImageData(x, y, 1, 1).data[2] == 255) {
+            startSet = false;
+        }
+    }
+
     context.fillRect(x, y, gridDimension - 1, gridDimension - 1);
 })
 
+var matches = document.querySelectorAll('li');
+matches.forEach((item) => {
+    item.addEventListener('click', function() {
+        document.querySelector('.selected').classList.remove('selected');
+        item.classList.add('selected')
+    });
+});
+
+
 drawBoard();
+
