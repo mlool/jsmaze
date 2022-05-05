@@ -79,6 +79,35 @@ var end = {
     yPos: 0
 };
 
+function findDistance(curr) {
+    var yDiff = (end.yPos / 25) - curr[0];
+    var xDiff = (end.xPos / 25) - curr[1];
+    return (yDiff * yDiff) + (xDiff * xDiff);
+}
+
+// validDirection: [North, East, South, West] as boolean
+function directionToGo(currentLocation, validDirection) {
+    var dft = currentLocation.distanceFromTop;
+    var dfl = currentLocation.distanceFromLeft;
+
+    var distanceIfGoNorth = findDistance([dft - 1, dfl]);
+    var distanceIfGoSouth = findDistance([dft + 1, dfl]);
+    var distanceIfGoEast = findDistance([dft, dfl + 1]);
+    var distanceIfGoWest = findDistance([dft, dfl - 1]);
+
+    var shortestDistance = 99999999999;
+    if (validDirection[0]) shortestDistance = Math.min(shortestDistance, distanceIfGoNorth);
+    if (validDirection[1]) shortestDistance = Math.min(shortestDistance, distanceIfGoEast);
+    if (validDirection[2]) shortestDistance = Math.min(shortestDistance, distanceIfGoSouth);
+    if (validDirection[3]) shortestDistance = Math.min(shortestDistance, distanceIfGoWest);
+
+
+    if (distanceIfGoNorth == shortestDistance && validDirection[0]) return "North";
+    if (distanceIfGoSouth == shortestDistance && validDirection[2]) return "South";
+    if (distanceIfGoEast == shortestDistance && validDirection[1]) return "East";
+    if (distanceIfGoWest == shortestDistance && validDirection[3]) return "West";
+}
+
 function isWall(x, y) {
     return (context.getImageData(x, y, 1, 1).data[0] == 255);
 } 
@@ -102,19 +131,25 @@ function gridSetup() {
     }
 }
 
-async function mazeSolveInitialize() {
+async function mazeSolveInitialize(pathFindingChoice) {
     if (!start.startSet) {
         alert("use blue color to signal start position");
     } else if (!end.endSet) {
         alert("use green color to signal end position");
     } else {
         gridSetup();
-        const result = await findShortestPath([start.yPos / 25, start.xPos / 25], grid);
-        printPath(result);
+        if (pathFindingChoice == 'simple') {
+            const result = await findShortestPathSimple([start.yPos / 25, start.xPos / 25], grid);
+            printPath(result);
+        } else if (pathFindingChoice == 'AStar') {
+            const result = await findShortestPathAStar([start.yPos / 25, start.xPos / 25], grid);
+            printPath(result);
+        }
+        
     }
 }
 
-async function findShortestPath(startCoordinates, grid) {
+async function findShortestPathSimple(startCoordinates, grid) {
     var distanceFromTop = startCoordinates[0];
     var distanceFromLeft = startCoordinates[1];
 
@@ -161,6 +196,47 @@ async function findShortestPath(startCoordinates, grid) {
         } else if (newLocation.status === 'Valid') {
             drawBox(newLocation.distanceFromLeft * 25, newLocation.distanceFromTop * 25, 'rgb(212, 253, 212)');
             queue.push(newLocation);
+        }
+    }
+
+    return false;
+};
+
+async function findShortestPathAStar(startCoordinates, grid) {
+    var distanceFromTop = startCoordinates[0];
+    var distanceFromLeft = startCoordinates[1];
+
+    var location = {
+        distanceFromTop: distanceFromTop,
+        distanceFromLeft: distanceFromLeft,
+        path: [],
+        status: 'Start'
+    };
+
+    var queue = [location];
+
+    while (queue.length > 0) {
+        var currentLocation = queue.shift();
+        await sleep(50);
+
+        var validDirections = [true, true, true, true]
+        var cycle = 0;
+
+        while (cycle < 4) {
+            var direction = directionToGo(currentLocation, validDirections);
+            var newLocation = exploreInDirection(currentLocation, direction, grid);
+            if (newLocation.status === 'Goal') {
+                return newLocation.path;
+            } else if (newLocation.status === 'Valid') {
+                drawBox(newLocation.distanceFromLeft * 25, newLocation.distanceFromTop * 25, 'rgb(212, 253, 212)');
+                queue.push(newLocation);
+                break;
+            }
+            cycle++;
+            if (direction == 'North') validDirections[0] = false;
+            if (direction == 'East') validDirections[1] = false;
+            if (direction == 'South') validDirections[2] = false;
+            if (direction == 'West') validDirections[3] = false;
         }
     }
 
@@ -310,8 +386,21 @@ matches.forEach((item) => {
 
 var simpleStartButton = document.getElementById('simple-start');
 simpleStartButton.addEventListener('click', function() {
-    console.log('hello');
-    mazeSolveInitialize();
+    mazeSolveInitialize('simple');
+})
+
+var simpleStartButton = document.getElementById('astar-start');
+simpleStartButton.addEventListener('click', function() {
+    mazeSolveInitialize('AStar');
+})
+
+var clearBoardButton = document.getElementById('clear-board');
+clearBoardButton.addEventListener('click', function() {
+    context.fillStyle = 'white';
+    context.fillRect(0, 0, canvasWidth, canvasHeight);
+    start.startSet = false;
+    end.endSet = false;
+    drawBoard();
 })
 
 drawBoard();

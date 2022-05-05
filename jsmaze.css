@@ -63,7 +63,7 @@ ul li{
     border-radius: 30px;
 }
 
-#simple-start {
+button {
     background: #4054b5;
     box-shadow: 0 3px 0 0 #293674;
     color: #fff;
@@ -76,11 +76,11 @@ ul li{
 
     border: none;
     border-radius: 5px;
-    margin: 30px auto;
+    margin: 30px auto 0px;
     padding: 5px 20px;
     width: 160px;
 }
 
-#simple-start:hover{
+button:hover{
     background: #324292;
 }
