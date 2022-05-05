@@ -7,6 +7,10 @@ var canvasWidth = 600;
 var canvas = document.getElementById('maze');
 var context = canvas.getContext('2d');
 
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 function drawBoard(){
     context.lineWidth = 2;
     context.strokeStyle = "#ededed";
@@ -17,14 +21,23 @@ function drawBoard(){
     }
 }
 
+// General uses
+function printPath(path) {
+    for (var i = 1; i < path.length; i++) {
+        drawBox(path[i][1] * 25, path[i][0] * 25, 'lightgreen');
+    }
+}
 
-
-
-
-
-
-
-
+function drawBox(x, y, color) {
+    while (x % gridDimension != 0) {
+        x = x - 1;
+    }
+    while (y % gridDimension != 0) {
+        y = y - 1;
+    }
+    context.fillStyle = color;
+    context.fillRect(x, y, gridDimension - 1, gridDimension - 1);
+}
 
 
 
@@ -53,7 +66,6 @@ function drawBoard(){
 // Actual Maze Solver
 var gridSize = canvasHeight / gridDimension;
 var grid = [];
-var completed = false;
 
 var start = {
     startSet: false,
@@ -67,20 +79,28 @@ var end = {
     yPos: 0
 };
 
-function drawBox(x, y, color) {
-    while (x % gridDimension != 0) {
-        x = x - 1;
-    }
-    while (y % gridDimension != 0) {
-        y = y - 1;
-    }
-    context.fillStyle = color;
-    context.fillRect(x, y, gridDimension - 1, gridDimension - 1);
-}
-
 function isWall(x, y) {
     return (context.getImageData(x, y, 1, 1).data[0] == 255);
 } 
+
+function gridSetup() {
+    for (var i = 0; i < gridSize; i++) {
+        grid[i] = [];
+        for (var j = 0; j < gridSize; j++) {
+            if (j == start.xPos / 25 && i == start.yPos / 25) {
+                console.log("start position: " + j + " " + i);
+                grid[i][j] = 'Start';
+            } else if (j == end.xPos / 25 && i == end.yPos / 25) {
+                console.log("end position: " + j + " " + i);
+                grid[i][j] = 'Goal';
+            } else if (isWall(j * 25, i * 25)) {
+                grid[i][j] = 'Obstacle';
+            } else {
+                grid[i][j] = 'Empty';
+            }
+        }
+    }
+}
 
 async function mazeSolveInitialize() {
     if (!start.startSet) {
@@ -88,42 +108,11 @@ async function mazeSolveInitialize() {
     } else if (!end.endSet) {
         alert("use green color to signal end position");
     } else {
-        for (var i = 0; i < gridSize; i++) {
-            grid[i] = [];
-            for (var j = 0; j < gridSize; j++) {
-                if (j == start.xPos / 25 && i == start.yPos / 25) {
-                    console.log("start position: " + j + " " + i);
-                    grid[i][j] = 'Start';
-                } else if (j == end.xPos / 25 && i == end.yPos / 25) {
-                    console.log("end position: " + j + " " + i);
-                    grid[i][j] = 'Goal';
-                } else if (isWall(j * 25, i * 25)) {
-                    grid[i][j] = 'Obstacle';
-                } else {
-                    grid[i][j] = 'Empty';
-                }
-            }
-        }
+        gridSetup();
         const result = await findShortestPath([start.yPos / 25, start.xPos / 25], grid);
         printPath(result);
     }
 }
-
-function inBound(x, y) {
-    return (x >= 0 && y >= 0 && x < canvasWidth && y < canvasHeight);
-}
-
-
-function printPath(path) {
-    for (var i = 1; i < path.length; i++) {
-        drawBox(path[i][1] * 25, path[i][0] * 25, 'lightgreen');
-    }
-}
-
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
-
 
 async function findShortestPath(startCoordinates, grid) {
     var distanceFromTop = startCoordinates[0];
@@ -144,7 +133,6 @@ async function findShortestPath(startCoordinates, grid) {
 
         var newLocation = exploreInDirection(currentLocation, 'East', grid);
         if (newLocation.status === 'Goal') {
-            completed = true;
             return newLocation.path;
         } else if (newLocation.status === 'Valid') {
             drawBox(newLocation.distanceFromLeft * 25, newLocation.distanceFromTop * 25, 'rgb(212, 253, 212)');
@@ -153,7 +141,6 @@ async function findShortestPath(startCoordinates, grid) {
 
         var newLocation = exploreInDirection(currentLocation, 'South', grid);
         if (newLocation.status === 'Goal') {
-            completed = true;
             return newLocation.path;
         } else if (newLocation.status === 'Valid') {
             drawBox(newLocation.distanceFromLeft * 25, newLocation.distanceFromTop * 25, 'rgb(212, 253, 212)');
@@ -162,7 +149,6 @@ async function findShortestPath(startCoordinates, grid) {
 
         var newLocation = exploreInDirection(currentLocation, 'West', grid);
         if (newLocation.status === 'Goal') {
-            completed = true;
             return newLocation.path;
         } else if (newLocation.status === 'Valid') {
             drawBox(newLocation.distanceFromLeft * 25, newLocation.distanceFromTop * 25, 'rgb(212, 253, 212)');
@@ -171,7 +157,6 @@ async function findShortestPath(startCoordinates, grid) {
 
         var newLocation = exploreInDirection(currentLocation, 'North', grid);
         if (newLocation.status === 'Goal') {
-            completed = true;
             return newLocation.path;
         } else if (newLocation.status === 'Valid') {
             drawBox(newLocation.distanceFromLeft * 25, newLocation.distanceFromTop * 25, 'rgb(212, 253, 212)');
@@ -323,8 +308,8 @@ matches.forEach((item) => {
     });
 });
 
-var startButton = document.getElementById('start');
-startButton.addEventListener('click', function() {
+var simpleStartButton = document.getElementById('simple-start');
+simpleStartButton.addEventListener('click', function() {
     console.log('hello');
     mazeSolveInitialize();
 })
