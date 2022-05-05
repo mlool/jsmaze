@@ -24,6 +24,32 @@ function drawBoard(){
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // Actual Maze Solver
 var gridSize = canvasHeight / gridDimension;
 var grid = [];
@@ -93,11 +119,6 @@ function printPath(path) {
         drawBox(path[i][1] * 25, path[i][0] * 25, 'lightgreen');
     }
 }
-
-
-
-
-
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
