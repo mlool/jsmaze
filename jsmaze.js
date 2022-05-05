@@ -17,6 +17,13 @@ function drawBoard(){
     }
 }
 
+function sleep(ms) {
+    console.log('waited');
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+
+
 
 
 
@@ -37,14 +44,14 @@ var end = {
     yPos: 0
 };
 
-function drawBox(x, y) {
+function drawBox(x, y, color) {
     while (x % gridDimension != 0) {
         x = x - 1;
     }
     while (y % gridDimension != 0) {
         y = y - 1;
     }
-    context.fillStyle = 'lightgreen';
+    context.fillStyle = color;
     context.fillRect(x, y, gridDimension - 1, gridDimension - 1);
 }
 
@@ -61,18 +68,20 @@ function mazeSolveInitialize() {
         for (var i = 0; i < gridSize; i++) {
             grid[i] = [];
             for (var j = 0; j < gridSize; j++) {
-                if (i == start.xPos && j == start.yPos) {
-                    grid[i][i] = 'Start';
-                } else if (i == end.xPos && j == end.yPos) {
+                if (j == start.xPos / 25 && i == start.yPos / 25) {
+                    console.log("start position: " + j + " " + i);
+                    grid[i][j] = 'Start';
+                } else if (j == end.xPos / 25 && i == end.yPos / 25) {
+                    console.log("end position: " + j + " " + i);
                     grid[i][j] = 'Goal';
-                } else if (isWall(i, j)) {
+                } else if (isWall(j * 25, i * 25)) {
                     grid[i][j] = 'Obstacle';
                 } else {
                     grid[i][j] = 'Empty';
                 }
             }
         }
-        console.log(findShortestPath([0,0], grid));
+        printPath(findShortestPath([start.yPos / 25, start.xPos / 25], grid));
     }
 }
 
@@ -81,12 +90,11 @@ function inBound(x, y) {
 }
 
 
-
-
-
-
-
-
+function printPath(path) {
+    for (var i = 0; i < path.length; i++) {
+        drawBox(path[i][1] * 25, path[i][0] * 25, 'lightgreen');
+    }
+}
 
 
 
@@ -97,8 +105,8 @@ function inBound(x, y) {
 
 
 var findShortestPath = function(startCoordinates, grid) {
-    var distanceFromTop = start.xPos;
-    var distanceFromLeft = start.yPos;
+    var distanceFromTop = startCoordinates[0];
+    var distanceFromLeft = startCoordinates[1];
 
     var location = {
         distanceFromTop: distanceFromTop,
@@ -107,43 +115,41 @@ var findShortestPath = function(startCoordinates, grid) {
         status: 'Start'
     };
 
-    // Initialize the queue with the start location already inside
     var queue = [location];
 
-    // Loop through the grid searching for the goal
     while (queue.length > 0) {
-        // Take the first location off the queue
         var currentLocation = queue.shift();
+        sleep(1000);
 
-        // Explore North
-        var newLocation = exploreInDirection(currentLocation, 'North', grid);
-        if (newLocation.status === 'Goal') {
-            return newLocation.path;
-        } else if (newLocation.status === 'Valid') {
-            queue.push(newLocation);
-        }
-
-        // Explore East
         var newLocation = exploreInDirection(currentLocation, 'East', grid);
         if (newLocation.status === 'Goal') {
             return newLocation.path;
         } else if (newLocation.status === 'Valid') {
+            drawBox(newLocation.distanceFromLeft * 25, newLocation.distanceFromTop * 25, 'rgb(212, 253, 212)');
             queue.push(newLocation);
         }
 
-        // Explore South
         var newLocation = exploreInDirection(currentLocation, 'South', grid);
         if (newLocation.status === 'Goal') {
             return newLocation.path;
         } else if (newLocation.status === 'Valid') {
+            drawBox(newLocation.distanceFromLeft * 25, newLocation.distanceFromTop * 25, 'rgb(212, 253, 212)');
             queue.push(newLocation);
         }
 
-        // Explore West
         var newLocation = exploreInDirection(currentLocation, 'West', grid);
         if (newLocation.status === 'Goal') {
             return newLocation.path;
         } else if (newLocation.status === 'Valid') {
+            drawBox(newLocation.distanceFromLeft * 25, newLocation.distanceFromTop * 25, 'rgb(212, 253, 212)');
+            queue.push(newLocation);
+        }
+
+        var newLocation = exploreInDirection(currentLocation, 'North', grid);
+        if (newLocation.status === 'Goal') {
+            return newLocation.path;
+        } else if (newLocation.status === 'Valid') {
+            drawBox(newLocation.distanceFromLeft * 25, newLocation.distanceFromTop * 25, 'rgb(212, 253, 212)');
             queue.push(newLocation);
         }
     }
@@ -169,7 +175,7 @@ var locationStatus = function(location, grid) {
   
 var exploreInDirection = function(currentLocation, direction, grid) {
     var newPath = currentLocation.path.slice();
-    newPath.push(direction);
+    newPath.push([currentLocation.distanceFromTop, currentLocation.distanceFromLeft]);
   
     var dft = currentLocation.distanceFromTop;
     var dfl = currentLocation.distanceFromLeft;
@@ -266,6 +272,8 @@ canvas.addEventListener('mousedown', function(e) {
             return;
         } else {
             end.endSet = true;
+            end.xPos = x;
+            end.yPos = y;
             if (context.getImageData(x, y, 1, 1).data[2] == 255) {
                 start.startSet = false;
             }
