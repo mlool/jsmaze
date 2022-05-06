@@ -44,25 +44,6 @@ function drawBox(x, y, color) {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // Actual Maze Solver
 var gridSize = canvasHeight / gridDimension;
 var grid = [];
