@@ -148,7 +148,7 @@ async function findShortestPathSimple(startCoordinates, grid) {
         var currentLocation = queue.shift();
         await sleep(50);
 
-        var newLocation = exploreInDirection(currentLocation, 'East', grid);
+        var newLocation = await exploreInDirection(currentLocation, 'East', grid);
         if (newLocation.status === 'Goal') {
             return newLocation.path;
         } else if (newLocation.status === 'Valid') {
@@ -156,7 +156,7 @@ async function findShortestPathSimple(startCoordinates, grid) {
             queue.push(newLocation);
         }
 
-        var newLocation = exploreInDirection(currentLocation, 'South', grid);
+        var newLocation = await exploreInDirection(currentLocation, 'South', grid);
         if (newLocation.status === 'Goal') {
             return newLocation.path;
         } else if (newLocation.status === 'Valid') {
@@ -164,7 +164,7 @@ async function findShortestPathSimple(startCoordinates, grid) {
             queue.push(newLocation);
         }
 
-        var newLocation = exploreInDirection(currentLocation, 'West', grid);
+        var newLocation = await exploreInDirection(currentLocation, 'West', grid);
         if (newLocation.status === 'Goal') {
             return newLocation.path;
         } else if (newLocation.status === 'Valid') {
@@ -172,7 +172,7 @@ async function findShortestPathSimple(startCoordinates, grid) {
             queue.push(newLocation);
         }
 
-        var newLocation = exploreInDirection(currentLocation, 'North', grid);
+        var newLocation = await exploreInDirection(currentLocation, 'North', grid);
         if (newLocation.status === 'Goal') {
             return newLocation.path;
         } else if (newLocation.status === 'Valid') {
