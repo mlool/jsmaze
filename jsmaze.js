@@ -93,7 +93,7 @@ function isWall(x, y) {
     return (context.getImageData(x, y, 1, 1).data[0] == 255);
 } 
 
-function gridSetup() {
+async function gridSetup() {
     for (var i = 0; i < gridSize; i++) {
         grid[i] = [];
         for (var j = 0; j < gridSize; j++) {
@@ -118,7 +118,7 @@ async function mazeSolveInitialize(pathFindingChoice) {
     } else if (!end.endSet) {
         alert("use green color to signal end position");
     } else {
-        gridSetup();
+        await gridSetup();
         if (pathFindingChoice == 'simple') {
             const result = await findShortestPathSimple([start.yPos / 25, start.xPos / 25], grid);
             printPath(result);
@@ -138,6 +138,7 @@ async function findShortestPathSimple(startCoordinates, grid) {
         distanceFromTop: distanceFromTop,
         distanceFromLeft: distanceFromLeft,
         path: [],
+        distanceToEnd: 0,
         status: 'Start'
     };
 
@@ -183,6 +184,69 @@ async function findShortestPathSimple(startCoordinates, grid) {
     return false;
 };
 
+// async function findShortestPathAStar(startCoordinates, grid) {
+//     var distanceFromTop = startCoordinates[0];
+//     var distanceFromLeft = startCoordinates[1];
+
+//     var location = {
+//         distanceFromTop: distanceFromTop,
+//         distanceFromLeft: distanceFromLeft,
+//         path: [],
+//         distanceToEnd: 0,
+//         status: 'Start'
+//     };
+
+//     location.distanceToEnd = findDistance(location);
+
+//     var queue = [location];
+
+//     while (queue.length > 0) {
+//         var currentLocation = getMinimumDistance(queue);
+//         await sleep(50);
+        
+
+//         var validDirections = [true, true, true, true]
+//         var cycle = 0;
+
+//         while (cycle < 4) {
+//             var direction = directionToGo(currentLocation, validDirections);
+//             var newLocation = exploreInDirection(currentLocation, direction, grid);
+//             if (newLocation.status === 'Goal') {
+//                 return newLocation.path;
+//             } else if (newLocation.status === 'Valid') {
+//                 drawBox(newLocation.distanceFromLeft * 25, newLocation.distanceFromTop * 25, 'rgb(212, 253, 212)');
+//                 queue.push(newLocation);
+//                 break;
+//             }
+//             cycle++;
+//             if (direction == 'North') validDirections[0] = false;
+//             if (direction == 'East') validDirections[1] = false;
+//             if (direction == 'South') validDirections[2] = false;
+//             if (direction == 'West') validDirections[3] = false;
+//         }
+//     }
+
+//     return false;
+// };
+
+async function findDistanceWithLocation(location) {
+    var yDiff = (end.yPos / 25) - location.distanceFromTop;
+    var xDiff = (end.xPos / 25) - location.distanceFromLeft;
+    return (yDiff * yDiff) + (xDiff * xDiff);
+}
+
+async function getMinimumDistance(queue) {
+    var indexOfMinimum = 0;
+    for (var i = 0; i < queue.length; i++) {
+        if (queue[indexOfMinimum].distanceToEnd > queue[i].distanceToEnd) {
+            indexOfMinimum = i;
+        }
+    }
+    var result = queue[indexOfMinimum];
+    queue.splice(indexOfMinimum, 1);
+    return result;
+}
+
 async function findShortestPathAStar(startCoordinates, grid) {
     var distanceFromTop = startCoordinates[0];
     var distanceFromLeft = startCoordinates[1];
@@ -191,41 +255,64 @@ async function findShortestPathAStar(startCoordinates, grid) {
         distanceFromTop: distanceFromTop,
         distanceFromLeft: distanceFromLeft,
         path: [],
+        distanceToEnd: 0,
         status: 'Start'
     };
+
+    location.distanceToEnd = await findDistanceWithLocation(location);
 
     var queue = [location];
 
     while (queue.length > 0) {
-        var currentLocation = queue.shift();
+        var currentLocation = await getMinimumDistance(queue);
+        console.log(currentLocation.distanceToEnd);
         await sleep(50);
         
-
-        var validDirections = [true, true, true, true]
-        var cycle = 0;
-
-        while (cycle < 4) {
-            var direction = directionToGo(currentLocation, validDirections);
-            var newLocation = exploreInDirection(currentLocation, direction, grid);
-            if (newLocation.status === 'Goal') {
-                return newLocation.path;
-            } else if (newLocation.status === 'Valid') {
-                drawBox(newLocation.distanceFromLeft * 25, newLocation.distanceFromTop * 25, 'rgb(212, 253, 212)');
-                queue.push(newLocation);
-                break;
-            }
-            cycle++;
-            if (direction == 'North') validDirections[0] = false;
-            if (direction == 'East') validDirections[1] = false;
-            if (direction == 'South') validDirections[2] = false;
-            if (direction == 'West') validDirections[3] = false;
+        if (currentLocation.status != 'Start') drawBox(currentLocation.distanceFromLeft * 25, currentLocation.distanceFromTop * 25, 'rgb(212, 253, 212)');
+        
+        var newLocation = await exploreInDirection(currentLocation, 'East', grid);
+        if (newLocation.status === 'Goal') {
+            return newLocation.path;
+        } else if (newLocation.status === 'Valid') {
+            drawBox(newLocation.distanceFromLeft * 25, newLocation.distanceFromTop * 25, 'rgb(212, 253, 212)');
+            queue.push(newLocation);
         }
+
+        var newLocation = await exploreInDirection(currentLocation, 'South', grid);
+        if (newLocation.status === 'Goal') {
+            return newLocation.path;
+        } else if (newLocation.status === 'Valid') {
+            drawBox(newLocation.distanceFromLeft * 25, newLocation.distanceFromTop * 25, 'rgb(212, 253, 212)');
+            queue.push(newLocation);
+        }
+
+        var newLocation = await exploreInDirection(currentLocation, 'West', grid);
+        if (newLocation.status === 'Goal') {
+            return newLocation.path;
+        } else if (newLocation.status === 'Valid') {
+            drawBox(newLocation.distanceFromLeft * 25, newLocation.distanceFromTop * 25, 'rgb(212, 253, 212)');
+            queue.push(newLocation);
+        }
+
+        var newLocation = await exploreInDirection(currentLocation, 'North', grid);
+        if (newLocation.status === 'Goal') {
+            return newLocation.path;
+        } else if (newLocation.status === 'Valid') {
+            drawBox(newLocation.distanceFromLeft * 25, newLocation.distanceFromTop * 25, 'rgb(212, 253, 212)');
+            queue.push(newLocation);
+        }
+
+        console.log(queue.length);
     }
 
     return false;
 };
+
+
+
+
   
-var locationStatus = function(location, grid) {
+async function locationStatus(location, grid) {
     var gridSize = grid.length;
     var dft = location.distanceFromTop;
     var dfl = location.distanceFromLeft;
@@ -241,7 +328,7 @@ var locationStatus = function(location, grid) {
     }
 };
   
-var exploreInDirection = function(currentLocation, direction, grid) {
+async function exploreInDirection(currentLocation, direction, grid) {
     var newPath = currentLocation.path.slice();
     newPath.push([currentLocation.distanceFromTop, currentLocation.distanceFromLeft]);
   
@@ -262,9 +349,11 @@ var exploreInDirection = function(currentLocation, direction, grid) {
       distanceFromTop: dft,
       distanceFromLeft: dfl,
       path: newPath,
+      distanceToEnd: 0,
       status: 'Unknown'
     };
-    newLocation.status = locationStatus(newLocation, grid);
+    newLocation.status = await locationStatus(newLocation, grid);
+    newLocation.distanceToEnd = await findDistanceWithLocation(newLocation);
 
     if (newLocation.status === 'Valid') {
       grid[newLocation.distanceFromTop][newLocation.distanceFromLeft] = 'Visited';
