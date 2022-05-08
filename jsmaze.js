@@ -199,6 +199,7 @@ async function findShortestPathAStar(startCoordinates, grid) {
     while (queue.length > 0) {
         var currentLocation = queue.shift();
         await sleep(50);
+        
 
         var validDirections = [true, true, true, true]
         var cycle = 0;
