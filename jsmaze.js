@@ -284,6 +284,7 @@ async function findShortestPathAStar(startCoordinates, grid) {
 
     while (queue.length > 0) {
         var currentLocation = await getMinimumDistance(queue);
+        console.log("Position at (" + currentLocation.distanceFromLeft + ", " + currentLocation.distanceFromTop + ")");
         console.log("Distance actual: "+ currentLocation.distanceActual);
         await sleep(50);
         
@@ -320,8 +321,6 @@ async function findShortestPathAStar(startCoordinates, grid) {
             drawBox(newLocation.distanceFromLeft * 25, newLocation.distanceFromTop * 25, 'rgb(212, 253, 212)');
             queue.push(newLocation);
         }
-
-        console.log(queue.length);
     }
 
     return false;
@@ -393,7 +392,7 @@ async function exploreInDirection(currentLocation, direction, grid, algoSelectio
     newLocation.status = await locationStatus(newLocation, grid);
     if (algoSelection == "astar") {
         newLocation.distanceToEnd = await findDistanceWithEnd(newLocation);
-        newLocation.distanceToEnd = await findDistanceWithBeginning(newLocation);
+        newLocation.distanceToBegining = await findDistanceWithBeginning(newLocation);
         newLocation.distanceActual = newLocation.distanceToEnd + newLocation.distanceToBegining;
     } else if (algoSelection == "best") {
         newLocation.distanceToEnd = await findDistanceWithEnd(newLocation);
