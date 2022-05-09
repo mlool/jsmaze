@@ -277,7 +277,7 @@ async function findShortestPathAStar(startCoordinates, grid) {
     };
 
     location.distanceToEnd = await findDistanceWithEnd(location);
-    location.distanceToBegining = await findDistanceWithBeginning(location);
+    location.distanceToBegining = location.path.length * location.path.length;
     location.distanceActual = location.distanceToEnd + location.distanceToBegining;
 
     var queue = [location];
@@ -392,7 +392,7 @@ async function exploreInDirection(currentLocation, direction, grid, algoSelectio
     newLocation.status = await locationStatus(newLocation, grid);
     if (algoSelection == "astar") {
         newLocation.distanceToEnd = await findDistanceWithEnd(newLocation);
-        newLocation.distanceToBegining = await findDistanceWithBeginning(newLocation);
+        newLocation.distanceToBegining = newLocation.path.length * newLocation.path.length;
         newLocation.distanceActual = newLocation.distanceToEnd + newLocation.distanceToBegining;
     } else if (algoSelection == "best") {
         newLocation.distanceToEnd = await findDistanceWithEnd(newLocation);
